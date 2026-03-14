@@ -1,6 +1,6 @@
 const { OAuth2Client } = require('google-auth-library');
 
-const ADMIN_EMAIL = '034sean0804@gmail.com'; 
+const ADMIN_EMAIL = '034sean0804@gmail.com'.toLowerCase(); // 強制轉小寫
 const MY_CLIENT_ID = '446221628195-8b1uquhgku05p17fl115tupc9lob730q.apps.googleusercontent.com';
 
 const client = new OAuth2Client(MY_CLIENT_ID);
@@ -19,13 +19,14 @@ module.exports = async (req, res) => {
             audience: MY_CLIENT_ID
         });
         const payload = ticket.getPayload();
+        const userEmail = payload.email.toLowerCase(); // 把收到的 Email 也轉小寫
         
-        // 【核心除錯】如果信箱不對，直接把收到的信箱顯示在錯誤訊息裡
-        if (payload.email === ADMIN_EMAIL) {
+        // 忽略大小寫的比對
+        if (userEmail === ADMIN_EMAIL) {
             return res.status(200).json({ name: payload.name, success: true });
         } else {
             return res.status(403).json({ 
-                error: `驗證失敗！你登入的是：[${payload.email}]，但管理員設定為：[${ADMIN_EMAIL}]` 
+                error: `驗證失敗！\n你登入的是：${userEmail}\n管理員設定為：${ADMIN_EMAIL}` 
             });
         }
     } catch (error) {
