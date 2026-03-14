@@ -7,11 +7,39 @@
     <script src="https://apis.google.com/js/platform.js" async defer></script>
     <meta name="google-signin-client_id" content="446221628195-8b1qsqhgv065p17fl115tupc9lob730pq.apps.googleusercontent.com">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Oxanium:wght@700&display=swap" rel="stylesheet">
-    
     <style>
-        /* 保留你原本的所有 CSS 樣式... */
-        :root { --primary: #5865F2; --accent: #00f2ff; --bg: #0a0a0f; --card-bg: rgba(255, 255, 255, 0.05); }
-        /* ... (略) ... */
+        :root {
+            --primary: #5865F2; --accent: #00f2ff; --bg: #0a0a0f; --card-bg: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1); --price-text: #4dfd63; --text: #ffffff;
+        }
+        body.light-mode { --bg: #f0f2f5; --card-bg: #ffffff; --border: #dcdde1; --text: #2f3640; --price-text: #27ae60; }
+        * { box-sizing: border-box; transition: 0.2s; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; background-image: radial-gradient(circle at 50% 0%, #161625 0%, #0a0a0f 70%); }
+        header { padding: 15px 20px; background: rgba(10, 10, 15, 0.8); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-family: 'Oxanium', sans-serif; font-size: 1.8rem; background: linear-gradient(90deg, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+        .container { max-width: 1400px; margin: auto; padding: 20px; }
+        .tool-box { background: var(--card-bg); border: 1px solid var(--primary); padding: 15px; border-radius: 12px; margin-bottom: 25px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .tool-box input { background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; width: 110px; }
+        .search-bar { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); font-size: 16px; margin-bottom: 20px; outline: none; }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 30px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .filter-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 10px 22px; border-radius: 50px; cursor: pointer; white-space: nowrap; font-weight: bold; }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 25px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 25px; display: flex; flex-direction: column; backdrop-filter: blur(10px); position: relative;}
+        .card-title { font-size: 1.25rem; font-weight: bold; color: var(--accent); margin-bottom: 20px; text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        select { width: 100%; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--primary); color: #fff; font-size: 16px; cursor: pointer; margin-bottom: 20px; outline: none; }
+        .price-display { text-align: center; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px dashed var(--border); }
+        .current-price { font-family: 'Oxanium'; font-size: 2.2rem; color: var(--price-text); font-weight: bold; }
+        .current-price::before { content: "NT$ "; font-size: 1.1rem; }
+        .order-btn { background: linear-gradient(45deg, var(--primary), #4752c4); color: white; text-align: center; padding: 15px; border-radius: 12px; text-decoration: none; font-weight: bold; display: block; }
+        .btn-disabled { filter: grayscale(1); pointer-events: none; opacity: 0.6; }
+        .status-tag { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; font-weight: bold; text-align: center; }
+        .tag-pause { background: #ff4d4f; color: white; }
+        .tag-hidden { background: #666; color: #ccc; }
+        .admin-edit-zone { background: #1a1a25; border: 1px solid var(--accent); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .admin-edit-zone input, .admin-edit-zone select, .admin-edit-zone textarea { width: 100%; margin-bottom: 10px; background: #000; color: #4dfd63; border: 1px solid #444; padding: 8px; border-radius: 5px; font-family: monospace; }
+        .admin-fab { position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2000; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .admin-bar { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #1a1a25; padding: 12px; border-top: 2px solid var(--primary); z-index: 1999; justify-content: center; gap: 20px; }
     </style>
 </head>
 <body>
@@ -20,6 +48,26 @@
     <div class="logo">GUNSLINGER STORE</div>
     <button onclick="document.body.classList.toggle('light-mode')" style="background:var(--card-bg); border:1px solid var(--border); color:var(--text); border-radius:50%; width:40px; height:40px; cursor:pointer;">🌓</button>
 </header>
+
+<div class="container">
+    <div class="tool-box">
+        <span style="font-weight: bold; color: var(--accent);">💰 匯率助手 (1:5)</span>
+        <input type="number" id="rmb" placeholder="人民幣" oninput="calc()">
+        <span>➔</span> <span id="twd" style="font-size: 1.3rem; color: var(--price-text); font-weight: bold;">0</span> <small>TWD</small>
+    </div>
+
+    <input type="text" id="search" class="search-bar" placeholder="🔍 搜尋遊戲名稱..." onkeyup="doSearch()">
+
+    <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterItems('all', event)">全部</button>
+        <button class="filter-btn" onclick="filterItems('topup', event)">手遊代儲</button>
+        <button class="filter-btn" onclick="filterItems('card', event)">點數卡</button>
+        <button class="filter-btn" onclick="filterItems('panel', event)">代購面板</button>
+        <button class="filter-btn" onclick="filterItems('vip', event)">代付/會員</button>
+    </div>
+
+    <div id="productGrid" class="grid"></div>
+</div>
 
 <div class="admin-fab" onclick="toggleAdmin()">🔑</div>
 <div class="admin-bar" id="adminBar">
@@ -30,76 +78,93 @@
 <div id="my-signin" style="display:none;"></div>
 
 <script>
-    const ADMIN_KEY = "SeanLee0804"; // 這是你的面板開關密碼
-    const ADMIN_EMAIL = "034sean0804@gmail.com"; // 這是你的雲端存取身分
+    const ADMIN_KEY = "SeanLee0804";
+    const ADMIN_EMAIL = "034sean0804@gmail.com";
     let isEditMode = false;
-    let products = [ /* 這裡是你的初始商品資料... */ ];
+    let products = [
+        { id: "steam", category: "card", title: "🎮 Steam 蒸氣卡", status: "active", options: [{label: "2310元", price: 2450}, {label: "1000元", price: 1060}] },
+        { id: "brawl", category: "topup", title: "🌵 荒野亂鬥", status: "active", options: [{label: "2000+200 寶石", price: 3190}] }
+    ];
 
-    // 3. 【雲端初始化】改寫原本的 init
     async function init() {
-        console.log("正在連線至 GUNSLINGER 雲端保險庫...");
         try {
-            const res = await fetch('/api'); // 對接到 Vercel 的 api/index.js
+            const res = await fetch('/api');
             const data = await res.json();
-            if (data.products && data.products.length > 0) {
-                products = data.products;
-                console.log("✅ 雲端資料同步完成");
-            }
-        } catch (e) { 
-            console.log("⚠️ 雲端連線失敗，啟動本地保險機制"); 
-        }
+            if (data.products) products = data.products;
+        } catch (e) { console.log("使用本地資料"); }
         render();
     }
 
-    // 4. 【雲端儲存】改寫原本的 saveChanges
+    function render() {
+        const grid = document.getElementById('productGrid');
+        grid.innerHTML = '';
+        products.forEach((p, i) => {
+            if (!isEditMode && p.status === 'hide') return;
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.category = p.category;
+            
+            let adminUI = isEditMode ? `
+                <div class="admin-edit-zone">
+                    <input type="text" value="${p.title}" onchange="products[${i}].title=this.value">
+                    <select onchange="products[${i}].status=this.value; render();">
+                        <option value="active" ${p.status=='active'?'selected':''}>正常</option>
+                        <option value="pause" ${p.status=='pause'?'selected':''}>暫停</option>
+                        <option value="hide" ${p.status=='hide'?'selected':''}>隱藏</option>
+                    </select>
+                    <textarea onchange="try{products[${i}].options=JSON.parse(this.value);render();}catch(e){alert('格式錯誤')}">${JSON.stringify(p.options)}</textarea>
+                    <button onclick="products.splice(${i},1);render()" style="color:red">刪除</button>
+                </div>` : '';
+
+            card.innerHTML = `
+                ${adminUI}
+                ${p.status === 'pause' ? '<div class="status-tag tag-pause">維護中</div>' : ''}
+                <div class="card-title">${p.title}</div>
+                <select onchange="document.getElementById('p-${i}').innerText = Number(this.value).toLocaleString()">
+                    ${p.options.map(opt => `<option value="${opt.price}">${opt.label}</option>`).join('')}
+                </select>
+                <div class="price-display"><span class="current-price" id="p-${i}">${Number(p.options[0].price).toLocaleString()}</span></div>
+                <a href="https://discord.gg/aveVvmcpsZ" class="order-btn ${p.status==='pause'?'btn-disabled':''}" target="_blank">立即開單</a>`;
+            grid.appendChild(card);
+        });
+    }
+
+    function toggleAdmin() {
+        if (isEditMode) return;
+        if (prompt("管理密碼：") === ADMIN_KEY) {
+            isEditMode = true;
+            document.getElementById('adminBar').style.display = 'flex';
+            render();
+        }
+    }
+
     async function saveChanges() {
-        const authInstance = gapi.auth2.getAuthInstance();
-        
-        // 如果還沒 Google 登入，先叫出登入
-        if (!authInstance.isSignedIn.get()) {
-            alert("請先驗證店長身分才能發布更新！");
+        const auth = gapi.auth2.getAuthInstance();
+        if (!auth.isSignedIn.get()) {
             gapi.signin2.render('my-signin', { 'onsuccess': onSignIn });
             document.getElementById('my-signin').click();
             return;
         }
-
-        const user = authInstance.currentUser.get();
-        if (user.getBasicProfile().getEmail().toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-            alert("此帳號無權限更新雲端保險庫！");
-            return;
-        }
-
-        const token = user.getAuthResponse().id_token;
-        const saveBtn = document.getElementById('save-btn');
-        saveBtn.innerText = "⚡ 同步中...";
-
-        try {
-            const res = await fetch('/api', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    token: token,
-                    action: 'save',
-                    newData: products // 傳送你編輯後的商品數組
-                })
-            });
-            if (res.ok) {
-                alert("✨ 全網更新成功！全世界現在都能看到最新價格。");
-            } else {
-                alert("❌ 儲存失敗，請檢查 Vercel 日誌。");
-            }
-        } catch (e) {
-            alert("❌ 連線異常，請確認環境變數。");
-        }
-        saveBtn.innerText = "💾 儲存並發布更新";
+        const res = await fetch('/api', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ token: auth.currentUser.get().getAuthResponse().id_token, action: 'save', newData: products })
+        });
+        if (res.ok) alert("✅ 更新成功");
     }
 
-    // (其餘 render, toggleAdmin, calc, doSearch, filterItems 函數全部保留你原始的寫法，保證風格不變)
-    function render() { /* ... 你原本的寫法 ... */ }
-    function toggleAdmin() { /* ... 你原本的寫法 ... */ }
-    function onSignIn(googleUser) { console.log("身分驗證成功"); }
-    
-    init();
+    function calc() { let r = document.getElementById('rmb').value; document.getElementById('twd').innerText = r ? (r * 5).toLocaleString() : 0; }
+    function doSearch() { 
+        let v = document.getElementById('search').value.toLowerCase(); 
+        document.querySelectorAll('.card').forEach(c => { c.style.display = c.innerText.toLowerCase().includes(v) ? "flex" : "none"; }); 
+    }
+    function filterItems(cat, e) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        document.querySelectorAll('.card').forEach(c => { c.style.display = (cat === 'all' || c.dataset.category === cat) ? "flex" : "none"; });
+    }
+    function onSignIn() { alert("驗證成功，請再次點擊儲存"); }
+    window.onload = () => { gapi.load('auth2', () => { gapi.auth2.init(); init(); }); };
 </script>
 </body>
 </html>
