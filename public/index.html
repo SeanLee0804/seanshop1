@@ -4,47 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GUNSLINGER | 槍手專業代儲平台</title>
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
-    <meta name="google-signin-client_id" content="446221628195-8b1qsqhgv065p17fl115tupc9lob730pq.apps.googleusercontent.com">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Oxanium:wght@700&display=swap" rel="stylesheet">
     <style>
-        /* (保留你所有的 CSS 樣式，完全沒變) */
-        :root { --primary: #5865F2; --accent: #00f2ff; --bg: #0a0a0f; --card-bg: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); --price-text: #4dfd63; --text: #ffffff; }
-        body.light-mode { --bg: #f0f2f5; --card-bg: #ffffff; --border: #dcdde1; --text: #2f3640; --price-text: #27ae60; }
-        * { box-sizing: border-box; transition: 0.2s; }
-        body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; background-image: radial-gradient(circle at 50% 0%, #161625 0%, #0a0a0f 70%); }
+        :root {
+            --primary: #5865F2; --accent: #00f2ff; --bg: #0a0a0f; --card-bg: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1); --price-text: #4dfd63; --text: #ffffff;
+        }
+        body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; background-image: radial-gradient(circle at 50% 0%, #161625 0%, #0a0a0f 70%); }
         header { padding: 15px 20px; background: rgba(10, 10, 15, 0.8); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-family: 'Oxanium', sans-serif; font-size: 1.8rem; background: linear-gradient(90deg, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+        .logo { font-family: 'Oxanium', sans-serif; font-size: 1.8rem; background: linear-gradient(90deg, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .container { max-width: 1400px; margin: auto; padding: 20px; }
+        
+        /* 工具與過濾 */
         .tool-box { background: var(--card-bg); border: 1px solid var(--primary); padding: 15px; border-radius: 12px; margin-bottom: 25px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
-        .tool-box input { background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; width: 110px; }
-        .search-bar { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); font-size: 16px; margin-bottom: 20px; outline: none; }
+        .tool-box input { background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; width: 110px; border: 1px solid #555; }
         .filter-bar { display: flex; gap: 10px; margin-bottom: 30px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
         .filter-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 10px 22px; border-radius: 50px; cursor: pointer; white-space: nowrap; font-weight: bold; }
-        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .filter-btn.active { background: var(--primary); color: white; }
+
+        /* 商品展示 */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 25px; }
-        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 25px; display: flex; flex-direction: column; backdrop-filter: blur(10px); position: relative;}
-        .card-title { font-size: 1.25rem; font-weight: bold; color: var(--accent); margin-bottom: 20px; text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        select { width: 100%; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--primary); color: #fff; font-size: 16px; cursor: pointer; margin-bottom: 20px; outline: none; }
-        .price-display { text-align: center; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px dashed var(--border); }
-        .current-price { font-family: 'Oxanium'; font-size: 2.2rem; color: var(--price-text); font-weight: bold; }
-        .current-price::before { content: "NT$ "; font-size: 1.1rem; }
-        .order-btn { background: linear-gradient(45deg, var(--primary), #4752c4); color: white; text-align: center; padding: 15px; border-radius: 12px; text-decoration: none; font-weight: bold; display: block; }
-        .btn-disabled { filter: grayscale(1); pointer-events: none; opacity: 0.6; }
-        .status-tag { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; font-weight: bold; text-align: center; }
-        .tag-pause { background: #ff4d4f; color: white; }
-        .admin-edit-zone { background: #1a1a25; border: 1px solid var(--accent); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        .admin-edit-zone input, .admin-edit-zone select, .admin-edit-zone textarea { width: 100%; margin-bottom: 10px; background: #000; color: #4dfd63; border: 1px solid #444; padding: 8px; border-radius: 5px; font-family: monospace; }
-        .admin-fab { position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2000; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .admin-bar { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #1a1a25; padding: 12px; border-top: 2px solid var(--primary); z-index: 1999; justify-content: center; gap: 20px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 25px; display: flex; flex-direction: column; backdrop-filter: blur(10px); position: relative; }
+        .card-title { font-size: 1.25rem; font-weight: bold; color: var(--accent); margin-bottom: 15px; text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        select { width: 100%; padding: 12px; border-radius: 10px; background: #000; border: 1px solid var(--primary); color: #fff; margin-bottom: 15px; font-size: 16px; outline: none; cursor: pointer; }
+        .price-display { text-align: center; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px dashed var(--border); }
+        .current-price { font-size: 2.2rem; color: var(--price-text); font-weight: bold; font-family: 'Oxanium'; }
+        .order-btn { background: linear-gradient(45deg, var(--primary), #4752c4); color: white; text-align: center; padding: 15px; border-radius: 12px; text-decoration: none; font-weight: bold; }
+
+        /* 管理模式 UI */
+        .login-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
+        .admin-fab { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2000; font-size: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: none; }
+        .admin-bar { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #1a1a25; padding: 15px; border-top: 2px solid var(--primary); z-index: 1999; justify-content: center; gap: 20px; }
+        .admin-edit-zone { background: #000; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 1px solid var(--accent); }
+        .admin-edit-zone input, .admin-edit-zone textarea { width: 100%; margin-bottom: 5px; background: #111; color: #4dfd63; border: 1px solid #444; padding: 8px; border-radius: 5px; font-family: monospace; }
     </style>
 </head>
 <body>
 
-<header>
-    <div class="logo">GUNSLINGER STORE</div>
-    <button onclick="document.body.classList.toggle('light-mode')" style="background:var(--card-bg); border:1px solid var(--border); color:var(--text); border-radius:50%; width:40px; height:40px; cursor:pointer;">🌓</button>
-</header>
+<header><div class="logo">GUNSLINGER STORE</div></header>
 
 <div class="container">
     <div class="tool-box">
@@ -52,8 +50,6 @@
         <input type="number" id="rmb" placeholder="人民幣" oninput="calc()">
         <span>➔</span> <span id="twd" style="font-size: 1.3rem; color: var(--price-text); font-weight: bold;">0</span> <small>TWD</small>
     </div>
-
-    <input type="text" id="search" class="search-bar" placeholder="🔍 搜尋遊戲名稱..." onkeyup="doSearch()">
 
     <div class="filter-bar">
         <button class="filter-btn active" onclick="filterItems('all', event)">全部</button>
@@ -66,127 +62,92 @@
     <div id="productGrid" class="grid"></div>
 </div>
 
-<div class="admin-fab" onclick="toggleAdmin()">🔑</div>
-<div class="admin-bar" id="adminBar">
-    <button onclick="addNewProduct()" style="background:#4dfd63; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">＋ 新增商品</button>
-    <button id="save-btn" onclick="saveChanges()" style="background:var(--primary); color:white; border:none; padding:10px 25px; border-radius:8px; font-weight:bold; cursor:pointer;">💾 儲存並發布更新</button>
-    <button onclick="logoutAdmin()" style="background:#ff4d4f; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">結束管理</button>
+<div id="loginOverlay" class="login-overlay">
+    <h2 style="color: #fff; margin-bottom: 25px;">管理員身份驗證</h2>
+    <div id="g_id_onload"
+         data-client_id="446221628195-8b1uquhgku05p17fl115tupc9lob730q.apps.googleusercontent.com"
+         data-callback="handleLogin">
+    </div>
+    <div class="g_id_signin" data-type="standard"></div>
+    <button onclick="document.getElementById('loginOverlay').style.display='none'" style="margin-top: 30px; background: none; border: 1px solid #555; color: #888; cursor: pointer; padding: 8px 20px; border-radius: 5px;">返回商城</button>
 </div>
-<div id="my-signin" style="display:none;"></div>
+
+<button class="admin-fab" onclick="document.getElementById('loginOverlay').style.display='flex'">🔑</button>
+
+<div class="admin-bar" id="adminBar">
+    <button onclick="addNew()" style="padding:10px 20px; cursor:pointer; background:#4dfd63; border:none; border-radius:8px; font-weight:bold;">＋ 新增商品</button>
+    <button onclick="copyData()" style="padding:10px 20px; background:var(--primary); color:#fff; border:none; border-radius:8px; cursor:pointer;">💾 複製 JSON 資料</button>
+    <button onclick="location.reload()" style="padding:10px 20px; cursor:pointer; background:#ff4d4f; color:white; border:none; border-radius:8px;">登出並結束</button>
+</div>
 
 <script>
-    const ADMIN_KEY = "SeanLee0804";
-    const ADMIN_EMAIL = "034sean0804@gmail.com";
-    let isEditMode = false;
-    let products = [];
+    let isEdit = false;
 
-    // 3. 【雲端初始化】
-    async function init() {
-        try {
-            const res = await fetch('/api');
+    // 🏆 商品資料庫 (內建備份)
+    let products = [
+        { "id": "steam", "category": "card", "title": "🎮 Steam 蒸氣卡", "options": [{"label": "2310元", "price": 2450}, {"label": "1000元", "price": 1060}, {"label": "100元", "price": 118}] },
+        { "id": "brawl", "category": "topup", "title": "🌵 荒野亂鬥 Brawl Stars", "options": [{"label": "2000+200 寶石", "price": 3190}, {"label": "高級通行證", "price": 410}] },
+        { "id": "gs", "category": "topup", "title": "⚔️ 原神 Genshin Impact", "options": [{"label": "8080 結晶", "price": 2500}, {"label": "空月祝福", "price": 150}] },
+        { "id": "emo", "category": "panel", "title": "👾 EMO ESP 面板", "options": [{"label": "租用月卡", "price": 400}] }
+    ];
+
+    async function handleLogin(response) {
+        // 向 Vercel API 請求身分驗證
+        const res = await fetch('/api', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: response.credential })
+        });
+
+        if (res.ok) {
             const data = await res.json();
-            if (data.products) products = data.products;
-        } catch (e) { console.log("讀取雲端失敗"); }
-        render();
+            isEdit = true;
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('adminBar').style.display = 'flex';
+            render();
+            alert("✅ 歡迎回來，" + data.name + "！管理權限已開啟。");
+        } else {
+            alert("❌ 驗證失敗：您不在管理員名單中。");
+        }
     }
 
-    // 4. 【渲染卡片】
     function render() {
         const grid = document.getElementById('productGrid');
         grid.innerHTML = '';
         products.forEach((p, i) => {
-            if (!isEditMode && p.status === 'hide') return;
             const card = document.createElement('div');
             card.className = 'card';
             card.dataset.category = p.category;
             
-            let adminUI = isEditMode ? `
-                <div class="admin-edit-zone">
-                    <input type="text" value="${p.title}" onchange="products[${i}].title=this.value">
-                    <select onchange="products[${i}].status=this.value; render();">
-                        <option value="active" ${p.status=='active'?'selected':''}>正常</option>
-                        <option value="pause" ${p.status=='pause'?'selected':''}>暫停</option>
-                        <option value="hide" ${p.status=='hide'?'selected':''}>隱藏</option>
-                    </select>
-                    <textarea onchange="try{products[${i}].options=JSON.parse(this.value);render();}catch(e){alert('格式錯誤')}">${JSON.stringify(p.options)}</textarea>
-                    <button onclick="products.splice(${i},1);render()" style="color:red">刪除</button>
-                </div>` : '';
+            let adminUI = isEdit ? `<div class="admin-edit-zone">
+                <input type="text" value="${p.title}" onchange="products[${i}].title=this.value">
+                <textarea onchange="try{products[${i}].options=JSON.parse(this.value);render();}catch(e){alert('格式錯誤')}">${JSON.stringify(p.options)}</textarea>
+                <button onclick="products.splice(${i},1);render()" style="color:red;cursor:pointer;background:none;border:none;">[ 刪除商品 ]</button>
+            </div>` : '';
 
-            card.innerHTML = `
-                ${adminUI}
-                ${p.status === 'pause' ? '<div class="status-tag tag-pause">維護中</div>' : ''}
+            card.innerHTML = `${adminUI}
                 <div class="card-title">${p.title}</div>
                 <select onchange="document.getElementById('p-${i}').innerText = Number(this.value).toLocaleString()">
                     ${p.options.map(opt => `<option value="${opt.price}">${opt.label}</option>`).join('')}
                 </select>
-                <div class="price-display"><span class="current-price" id="p-${i}">${Number(p.options[0].price).toLocaleString()}</span></div>
-                <a href="https://discord.gg/aveVvmcpsZ" class="order-btn ${p.status==='pause'?'btn-disabled':''}" target="_blank">立即開單</a>`;
+                <div class="price-display">NT$ <span class="current-price" id="p-${i}">${p.options[0].price.toLocaleString()}</span></div>
+                <a href="https://discord.gg/aveVvmcpsZ" class="order-btn" target="_blank">立即開單</a>`;
             grid.appendChild(card);
         });
     }
 
-    // 5. 【管理員邏輯】
-    function toggleAdmin() {
-        if (isEditMode) return;
-        if (prompt("管理密碼：") === ADMIN_KEY) {
-            isEditMode = true;
-            document.getElementById('adminBar').style.display = 'flex';
-            render();
-        }
-    }
-
-    // 6. 【核心：Google 登入並儲存雲端】
-    async function saveChanges() {
-        const auth = gapi.auth2.getAuthInstance();
-        if (!auth.isSignedIn.get()) {
-            alert("請先驗證店長 Google 身分！");
-            gapi.signin2.render('my-signin', { 'onsuccess': onSignIn });
-            document.getElementById('my-signin').click();
-            return;
-        }
-
-        const user = auth.currentUser.get();
-        if (user.getBasicProfile().getEmail().toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-            alert("此帳號無權限存取雲端保險庫！");
-            return;
-        }
-
-        const saveBtn = document.getElementById('save-btn');
-        saveBtn.innerText = "⚡ 同步中...";
-        
-        try {
-            const res = await fetch('/api', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    token: user.getAuthResponse().id_token, 
-                    action: 'save', 
-                    newData: products 
-                })
-            });
-            if (res.ok) alert("✅ 槍手雲端保險庫更新成功！");
-        } catch (e) { alert("連線錯誤"); }
-        saveBtn.innerText = "💾 儲存並發布更新";
-    }
-
+    function addNew() { products.unshift({ id: Date.now(), category: "topup", title: "新商品", options: [{label: "100", price: 100}] }); render(); }
     function calc() { let r = document.getElementById('rmb').value; document.getElementById('twd').innerText = r ? (r * 5).toLocaleString() : 0; }
-    function doSearch() { 
-        let v = document.getElementById('search').value.toLowerCase(); 
-        document.querySelectorAll('.card').forEach(c => { c.style.display = c.innerText.toLowerCase().includes(v) ? "flex" : "none"; }); 
-    }
     function filterItems(cat, e) {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
-        document.querySelectorAll('.card').forEach(c => { c.style.display = (cat === 'all' || c.dataset.category === cat) ? "flex" : "none"; });
+        document.querySelectorAll('.card').forEach(c => c.style.display = (cat === 'all' || c.dataset.category === cat) ? 'flex' : 'none');
     }
-    function onSignIn() { alert("店長驗證成功，請再次點擊儲存按鈕發布！"); }
-    function logoutAdmin() { isEditMode = false; document.getElementById('adminBar').style.display = 'none'; render(); }
+    function copyData() {
+        navigator.clipboard.writeText(JSON.stringify(products, null, 2)).then(() => alert("✅ 資料已複製到剪貼簿！請手動貼回 GitHub 的 index.html 更新商品庫。"));
+    }
 
-    window.onload = () => { 
-        gapi.load('auth2', () => { 
-            gapi.auth2.init().then(() => init()); 
-        }); 
-    };
+    render();
 </script>
 </body>
 </html>
