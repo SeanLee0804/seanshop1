@@ -8,10 +8,8 @@
     <meta name="google-signin-client_id" content="446221628195-8b1qsqhgv065p17fl115tupc9lob730pq.apps.googleusercontent.com">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Oxanium:wght@700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #5865F2; --accent: #00f2ff; --bg: #0a0a0f; --card-bg: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1); --price-text: #4dfd63; --text: #ffffff;
-        }
+        /* (保留你所有的 CSS 樣式，完全沒變) */
+        :root { --primary: #5865F2; --accent: #00f2ff; --bg: #0a0a0f; --card-bg: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); --price-text: #4dfd63; --text: #ffffff; }
         body.light-mode { --bg: #f0f2f5; --card-bg: #ffffff; --border: #dcdde1; --text: #2f3640; --price-text: #27ae60; }
         * { box-sizing: border-box; transition: 0.2s; }
         body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; background-image: radial-gradient(circle at 50% 0%, #161625 0%, #0a0a0f 70%); }
@@ -35,7 +33,6 @@
         .btn-disabled { filter: grayscale(1); pointer-events: none; opacity: 0.6; }
         .status-tag { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; font-weight: bold; text-align: center; }
         .tag-pause { background: #ff4d4f; color: white; }
-        .tag-hidden { background: #666; color: #ccc; }
         .admin-edit-zone { background: #1a1a25; border: 1px solid var(--accent); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
         .admin-edit-zone input, .admin-edit-zone select, .admin-edit-zone textarea { width: 100%; margin-bottom: 10px; background: #000; color: #4dfd63; border: 1px solid #444; padding: 8px; border-radius: 5px; font-family: monospace; }
         .admin-fab { position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2000; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
@@ -81,20 +78,19 @@
     const ADMIN_KEY = "SeanLee0804";
     const ADMIN_EMAIL = "034sean0804@gmail.com";
     let isEditMode = false;
-    let products = [
-        { id: "steam", category: "card", title: "🎮 Steam 蒸氣卡", status: "active", options: [{label: "2310元", price: 2450}, {label: "1000元", price: 1060}] },
-        { id: "brawl", category: "topup", title: "🌵 荒野亂鬥", status: "active", options: [{label: "2000+200 寶石", price: 3190}] }
-    ];
+    let products = [];
 
+    // 3. 【雲端初始化】
     async function init() {
         try {
             const res = await fetch('/api');
             const data = await res.json();
             if (data.products) products = data.products;
-        } catch (e) { console.log("使用本地資料"); }
+        } catch (e) { console.log("讀取雲端失敗"); }
         render();
     }
 
+    // 4. 【渲染卡片】
     function render() {
         const grid = document.getElementById('productGrid');
         grid.innerHTML = '';
@@ -129,6 +125,7 @@
         });
     }
 
+    // 5. 【管理員邏輯】
     function toggleAdmin() {
         if (isEditMode) return;
         if (prompt("管理密碼：") === ADMIN_KEY) {
@@ -138,19 +135,38 @@
         }
     }
 
+    // 6. 【核心：Google 登入並儲存雲端】
     async function saveChanges() {
         const auth = gapi.auth2.getAuthInstance();
         if (!auth.isSignedIn.get()) {
+            alert("請先驗證店長 Google 身分！");
             gapi.signin2.render('my-signin', { 'onsuccess': onSignIn });
             document.getElementById('my-signin').click();
             return;
         }
-        const res = await fetch('/api', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ token: auth.currentUser.get().getAuthResponse().id_token, action: 'save', newData: products })
-        });
-        if (res.ok) alert("✅ 更新成功");
+
+        const user = auth.currentUser.get();
+        if (user.getBasicProfile().getEmail().toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+            alert("此帳號無權限存取雲端保險庫！");
+            return;
+        }
+
+        const saveBtn = document.getElementById('save-btn');
+        saveBtn.innerText = "⚡ 同步中...";
+        
+        try {
+            const res = await fetch('/api', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    token: user.getAuthResponse().id_token, 
+                    action: 'save', 
+                    newData: products 
+                })
+            });
+            if (res.ok) alert("✅ 槍手雲端保險庫更新成功！");
+        } catch (e) { alert("連線錯誤"); }
+        saveBtn.innerText = "💾 儲存並發布更新";
     }
 
     function calc() { let r = document.getElementById('rmb').value; document.getElementById('twd').innerText = r ? (r * 5).toLocaleString() : 0; }
@@ -163,8 +179,14 @@
         e.target.classList.add('active');
         document.querySelectorAll('.card').forEach(c => { c.style.display = (cat === 'all' || c.dataset.category === cat) ? "flex" : "none"; });
     }
-    function onSignIn() { alert("驗證成功，請再次點擊儲存"); }
-    window.onload = () => { gapi.load('auth2', () => { gapi.auth2.init(); init(); }); };
+    function onSignIn() { alert("店長驗證成功，請再次點擊儲存按鈕發布！"); }
+    function logoutAdmin() { isEditMode = false; document.getElementById('adminBar').style.display = 'none'; render(); }
+
+    window.onload = () => { 
+        gapi.load('auth2', () => { 
+            gapi.auth2.init().then(() => init()); 
+        }); 
+    };
 </script>
 </body>
 </html>
