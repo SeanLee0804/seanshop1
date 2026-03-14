@@ -8,7 +8,6 @@
     <meta name="google-signin-client_id" content="446221628195-8b1qsqhgv065p17fl115tupc9lob730pq.apps.googleusercontent.com">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Oxanium:wght@700&display=swap" rel="stylesheet">
     <style>
-        /* 100% 恢復你的槍手商店帥氣樣式 */
         :root {
             --primary: #5865F2; --accent: #00f2ff; --bg: #0a0a0f; --card-bg: rgba(255, 255, 255, 0.05);
             --border: rgba(255, 255, 255, 0.1); --price-text: #4dfd63; --text: #ffffff;
@@ -36,15 +35,15 @@
         .btn-disabled { filter: grayscale(1); pointer-events: none; opacity: 0.6; }
         .status-tag { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; font-weight: bold; text-align: center; }
         .tag-pause { background: #ff4d4f; color: white; }
-        
+
         /* 管理員專用 UI */
-        .admin-edit-zone { background: rgba(26, 26, 37, 0.9); border: 1px solid var(--accent); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .admin-edit-zone { background: #1a1a25; border: 1px solid var(--accent); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
         .admin-edit-zone input, .admin-edit-zone select, .admin-edit-zone textarea { 
             width: 100%; margin-bottom: 10px; background: #000; color: #4dfd63; border: 1px solid #444; padding: 8px; border-radius: 5px; font-family: monospace; 
         }
-        .admin-fab { position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2000; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); opacity: 0.5; }
-        .admin-fab:hover { opacity: 1; }
-        .admin-bar { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #1a1a25; padding: 12px; border-top: 2px solid var(--primary); z-index: 1999; justify-content: center; gap: 20px; }
+        .admin-fab { position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2000; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .admin-bar { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #1a1a25; padding: 12px; border-top: 2px solid var(--primary); z-index: 1999; justify-content: center; gap: 20px; align-items: center; }
+        #user-info { color: #4dfd63; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -63,7 +62,7 @@
 
     <input type="text" id="search" class="search-bar" placeholder="🔍 搜尋遊戲名稱或面額..." onkeyup="doSearch()">
 
-    <div class="filter-bar" id="filterBar">
+    <div class="filter-bar">
         <button class="filter-btn active" onclick="filterItems('all', event)">全部</button>
         <button class="filter-btn" onclick="filterItems('topup', event)">手遊代儲</button>
         <button class="filter-btn" onclick="filterItems('card', event)">點數卡</button>
@@ -71,11 +70,12 @@
         <button class="filter-btn" onclick="filterItems('vip', event)">代付/會員</button>
     </div>
 
-    <div id="productGrid" class="grid">🐾 槍手正在裝填雲端價格...</div>
+    <div id="productGrid" class="grid">🐾 裝填雲端保險箱資料中...</div>
 </div>
 
 <div class="admin-fab" onclick="toggleAdmin()">🔑</div>
 <div class="admin-bar" id="adminBar">
+    <div id="user-info">未驗證身分</div>
     <button onclick="addNewProduct()" style="background:#4dfd63; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">＋ 新增商品</button>
     <button id="save-btn" onclick="saveChanges()" style="background:var(--primary); color:white; border:none; padding:10px 25px; border-radius:8px; font-weight:bold; cursor:pointer;">💾 儲存並發布更新</button>
     <button onclick="logoutAdmin()" style="background:#ff4d4f; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">結束管理</button>
@@ -83,8 +83,8 @@
 <div id="my-signin" style="display:none;"></div>
 
 <script>
-    const ADMIN_KEY = "SeanLee0804"; // 這是開啟後台的密碼
-    const ADMIN_EMAIL = "034sean0804@gmail.com"; // 這是你有權限存取雲端的帳號
+    const ADMIN_KEY = "SeanLee0804";
+    const ADMIN_EMAIL = "034sean0804@gmail.com";
     let isEditMode = false;
     let products = [];
 
@@ -94,12 +94,12 @@
             const res = await fetch('/api');
             const data = await res.json();
             if (data.products) products = data.products;
-            else products = [ { id: "new", category: "topup", title: "範例商品", status: "active", options: [{label: "100面額", price: 100}] } ];
-        } catch (e) { console.log("讀取失敗"); }
+            else products = [{ id: "new", category: "topup", title: "範例：Steam 蒸氣卡", status: "active", options: [{label: "100元", price: 100}] }];
+        } catch (e) { console.log("讀取雲端失敗"); }
         render();
     }
 
-    // 2. 渲染卡片邏輯 (確保不崩潰)
+    // 2. 渲染卡片
     function render() {
         const grid = document.getElementById('productGrid');
         grid.innerHTML = '';
@@ -136,23 +136,45 @@
         });
     }
 
-    // 3. 管理員開關
+    // 3. 管理員開關與 Google 登入連動
     function toggleAdmin() {
         if (isEditMode) return;
         if (prompt("請輸入管理密碼：") === ADMIN_KEY) {
             isEditMode = true;
             document.getElementById('adminBar').style.display = 'flex';
             render();
+            
+            // 開啟面板後立刻檢查或啟動 Google 登入
+            const auth = gapi.auth2.getAuthInstance();
+            if (!auth.isSignedIn.get()) {
+                alert("🔑 請先驗證店長 Google 身分以開啟雲端權限。");
+                auth.signIn().then(user => onSignIn(user));
+            } else {
+                onSignIn(auth.currentUser.get());
+            }
         }
     }
 
-    // 4. 核心功能：Google 驗證儲存雲端
+    // 4. 驗證 Google 帳號身分
+    function onSignIn(googleUser) {
+        const profile = googleUser.getBasicProfile();
+        const email = profile.getEmail();
+        if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+            document.getElementById('user-info').innerText = "店長已就位：" + profile.getName();
+            document.getElementById('user-info').style.color = "#4dfd63";
+        } else {
+            document.getElementById('user-info').innerText = "帳號錯誤：" + email;
+            document.getElementById('user-info').style.color = "#ff4d4f";
+            alert("⚠️ 此帳號非店長帳號，將無法儲存至雲端。");
+        }
+    }
+
+    // 5. 儲存至雲端
     async function saveChanges() {
         const auth = gapi.auth2.getAuthInstance();
         if (!auth.isSignedIn.get()) {
             alert("請先驗證店長 Google 身分！");
-            gapi.signin2.render('my-signin', { 'onsuccess': onSignIn });
-            document.getElementById('my-signin').click();
+            auth.signIn().then(() => saveChanges());
             return;
         }
 
@@ -163,7 +185,7 @@
         }
 
         const saveBtn = document.getElementById('save-btn');
-        saveBtn.innerText = "⚡ 正在同步雲端...";
+        saveBtn.innerText = "⚡ 同步中...";
         
         try {
             const res = await fetch('/api', {
@@ -176,11 +198,12 @@
                 })
             });
             if (res.ok) alert("✅ 槍手雲端保險庫更新完成！");
+            else alert("❌ 儲存失敗，請檢查權限設定。");
         } catch (e) { alert("連線錯誤"); }
         saveBtn.innerText = "💾 儲存並發布更新";
     }
 
-    // 其他原本的工具函數
+    // 匯率助手與搜尋功能
     function calc() { let r = document.getElementById('rmb').value; document.getElementById('twd').innerText = r ? (r * 5).toLocaleString() : 0; }
     function doSearch() { 
         let v = document.getElementById('search').value.toLowerCase(); 
@@ -191,14 +214,12 @@
         e.target.classList.add('active');
         document.querySelectorAll('.card').forEach(c => { c.style.display = (cat === 'all' || c.dataset.category === cat) ? "flex" : "none"; });
     }
-    function onSignIn() { alert("店長身分驗證成功，請再次點擊儲存按鈕發布！"); }
     function logoutAdmin() { isEditMode = false; document.getElementById('adminBar').style.display = 'none'; render(); }
     function addNewProduct() {
         products.unshift({ id: Date.now(), category: "topup", title: "新商品", status: "active", options: [{label: "100面額", price: 100}] });
         render();
     }
 
-    // 啟動
     window.onload = () => { 
         gapi.load('auth2', () => { 
             gapi.auth2.init().then(() => init()); 
