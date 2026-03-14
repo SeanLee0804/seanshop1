@@ -1,122 +1,217 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sean Shop - 專業遊戲帳號交易</title>
+    <title>GUNSLINGER | 槍手專業代儲平台</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Oxanium:wght@700&display=swap" rel="stylesheet">
     <style>
-        /* 恢復 Vercel 截圖中的深色質感 */
         :root {
-            --bg-color: #0d1117;
-            --card-color: #161b22;
-            --accent-color: #58a6ff;
-            --text-color: #c9d1d9;
-            --danger: #f85149;
+            --primary: #5865F2; --accent: #00f2ff; --bg: #0a0a0f; --card-bg: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1); --price-text: #4dfd63; --text: #ffffff;
         }
-        body { background-color: var(--bg-color); color: var(--text-color); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .nav-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid #30363d; margin-bottom: 30px; }
+        body.light-mode { --bg: #f0f2f5; --card-bg: #ffffff; --border: #dcdde1; --text: #2f3640; --price-text: #27ae60; }
+        * { box-sizing: border-box; transition: 0.2s; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; background-image: radial-gradient(circle at 50% 0%, #161625 0%, #0a0a0f 70%); }
+        header { padding: 15px 20px; background: rgba(10, 10, 15, 0.8); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-family: 'Oxanium', sans-serif; font-size: 1.8rem; background: linear-gradient(90deg, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; }
+        .container { max-width: 1400px; margin: auto; padding: 20px; }
         
-        /* 商品卡片配置 */
-        .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-        .item-card { background: var(--card-color); border: 1px solid #30363d; border-radius: 6px; padding: 16px; transition: 0.2s; }
-        .item-card:hover { border-color: #8b949e; }
-        .item-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; color: #fff; }
-        .item-price { font-size: 1.1rem; color: #3fb950; font-weight: bold; }
+        /* 工具與搜尋 */
+        .tool-box { background: var(--card-bg); border: 1px solid var(--primary); padding: 15px; border-radius: 12px; margin-bottom: 25px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .tool-box input { background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; width: 110px; }
+        .search-bar { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); font-size: 16px; margin-bottom: 20px; outline: none; }
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 30px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .filter-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 10px 22px; border-radius: 50px; cursor: pointer; white-space: nowrap; font-weight: bold; }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* 商品展示 */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 25px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 25px; display: flex; flex-direction: column; backdrop-filter: blur(10px); position: relative;}
+        .card-title { font-size: 1.25rem; font-weight: bold; color: var(--accent); margin-bottom: 20px; text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        select { width: 100%; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--primary); color: #fff; font-size: 16px; cursor: pointer; margin-bottom: 20px; outline: none; }
+        .price-display { text-align: center; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px dashed var(--border); }
+        .current-price { font-family: 'Oxanium'; font-size: 2.2rem; color: var(--price-text); font-weight: bold; }
+        .current-price::before { content: "NT$ "; font-size: 1.1rem; }
+        .order-btn { background: linear-gradient(45deg, var(--primary), #4752c4); color: white; text-align: center; padding: 15px; border-radius: 12px; text-decoration: none; font-weight: bold; display: block; }
+        .btn-disabled { filter: grayscale(1); pointer-events: none; opacity: 0.6; }
+        .status-tag { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; font-weight: bold; text-align: center; }
+        .tag-pause { background: #ff4d4f; color: white; }
+        .tag-hidden { background: #666; color: #ccc; }
+
+        /* 管理員介面 */
+        .admin-edit-zone { display: none; background: #1a1a25; border: 1px solid var(--accent); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .admin-edit-zone label { font-size: 11px; color: #888; display: block; margin-top: 5px; }
+        .admin-edit-zone input, .admin-edit-zone select, .admin-edit-zone textarea { width: 100%; margin-bottom: 10px; background: #000; color: #4dfd63; border: 1px solid #444; padding: 8px; border-radius: 5px; font-family: monospace; }
         
-        /* 管理員修改區域 */
-        #admin-editor { display: none; margin-top: 40px; padding: 20px; background: #010409; border: 1px solid var(--accent-color); border-radius: 6px; }
-        #json-input { width: 100%; height: 300px; background: #0d1117; color: #79c0ff; border: 1px solid #30363d; padding: 10px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
-        .btn-save { background-color: #238636; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 10px; font-weight: bold; }
-        .btn-save:hover { background-color: #2ea043; }
+        /* 登入按鈕區域 */
+        .login-section { display: flex; align-items: center; gap: 10px; }
+        .admin-bar { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #1a1a25; padding: 12px; border-top: 2px solid var(--primary); z-index: 1999; justify-content: center; gap: 20px; }
     </style>
 </head>
 <body>
 
+<header>
+    <div class="logo">GUNSLINGER STORE</div>
+    <div class="login-section">
+        <div id="g_id_onload"
+             data-client_id="446221628195-8b1qsqhgv065p17fl115tupc9lob730pq.apps.googleusercontent.com"
+             data-callback="handleCredentialResponse">
+        </div>
+        <div class="g_id_signin" data-type="icon" data-shape="circle"></div>
+        <button onclick="document.body.classList.toggle('light-mode')" style="background:var(--card-bg); border:1px solid var(--border); color:var(--text); border-radius:50%; width:40px; height:40px; cursor:pointer;">🌓</button>
+    </div>
+</header>
+
 <div class="container">
-    <div class="nav-header">
-        <h1 style="color: #fff; margin: 0;">Sean Shop</h1>
-        <div id="login-module">
-            <div id="g_id_onload"
-                 data-client_id="446221628195-8b1qsqhgv065p17fl115tupc9lob730pq.apps.googleusercontent.com"
-                 data-callback="onAdminAuth">
-            </div>
-            <div class="g_id_signin" data-type="standard"></div>
-        </div>
-        <div id="admin-info" style="display:none;">
-            <span id="admin-name"></span>
-            <button onclick="location.reload()" style="background:none; border:1px solid #30363d; color:#8b949e; cursor:pointer; margin-left:10px;">登出</button>
-        </div>
+    <div class="tool-box">
+        <span style="font-weight: bold; color: var(--accent);">💰 匯率助手 (1:5)</span>
+        <input type="number" id="rmb" placeholder="人民幣" oninput="calc()">
+        <span>➔</span> <span id="twd" style="font-size: 1.3rem; color: var(--price-text); font-weight: bold;">0</span> <small>TWD</small>
     </div>
 
-    <div class="shop-grid" id="main-shop">
-        </div>
+    <input type="text" id="search" class="search-bar" placeholder="🔍 搜尋遊戲名稱或面額..." onkeyup="doSearch()">
 
-    <div id="admin-editor">
-        <h2 style="color: var(--accent-color);">管理員控制台 - 修改商城資料</h2>
-        <p>編輯下方的 JSON 資料來更新商城內容：</p>
-        <textarea id="json-input"></textarea>
-        <br>
-        <button class="btn-save" onclick="handleUpdate()">確認修改並更新 (自動儲存)</button>
+    <div class="filter-bar" id="filterBar">
+        <button class="filter-btn active" onclick="filterItems('all')">全部</button>
+        <button class="filter-btn" onclick="filterItems('topup')">手遊代儲</button>
+        <button class="filter-btn" onclick="filterItems('card')">點數卡</button>
+        <button class="filter-btn" onclick="filterItems('panel')">代購面板</button>
+        <button class="filter-btn" onclick="filterItems('vip')">代付/會員</button>
     </div>
+
+    <div id="productGrid" class="grid"></div>
+</div>
+
+<div class="admin-bar" id="adminBar">
+    <span id="adminName" style="color:var(--accent); font-weight:bold; align-self:center;"></span>
+    <button onclick="addNewProduct()" style="background:#4dfd63; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">＋ 新增商品</button>
+    <button onclick="saveChanges()" style="background:var(--primary); color:white; border:none; padding:10px 25px; border-radius:8px; font-weight:bold; cursor:pointer;">💾 儲存並發布更新</button>
+    <button onclick="logoutAdmin()" style="background:#ff4d4f; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">結束管理</button>
 </div>
 
 <script>
-    // 1. 初始化資料 (模擬你原本的數據庫內容)
-    let shopData = [
-        { id: 1, name: "625 VALORANT Points", price: 150 },
-        { id: 2, name: "1250 VALORANT Points", price: 300 },
-        { id: 3, name: "2500 VALORANT Points", price: 600 }
+    // 配置允許的管理員 Email (請根據你的 Google 帳號修改)
+    const ALLOWED_ADMINS = ["你的Email@gmail.com"]; 
+    let isEditMode = false;
+    
+    // --- 🏆 內建商品資料 ---
+    let products = [
+        { id: "steam", category: "card", title: "🎮 Steam 蒸氣卡", status: "active", options: [{label: "1000元", price: 1060}, {label: "500元", price: 540}] },
+        { id: "brawl", category: "topup", title: "🌵 荒野亂鬥 Brawl Stars", status: "active", options: [{label: "高級通行證", price: 410}, {label: "普通通行證", price: 285}] },
+        // ... 其他商品資料 ...
     ];
 
-    // 2. 渲染商城
-    function renderShop() {
-        const grid = document.getElementById('main-shop');
-        grid.innerHTML = shopData.map(item => `
-            <div class="item-card">
-                <div class="item-title">${item.name}</div>
-                <div class="item-price">NT$ ${item.price}</div>
-            </div>
-        `).join('');
-        document.getElementById('json-input').value = JSON.stringify(shopData, null, 2);
-    }
-    renderShop();
-
-    // 3. Google 登入驗證回調
-    function onAdminAuth(response) {
-        // 解析 Google Token
-        const payload = JSON.parse(atob(response.credential.split('.')[1]));
-        
-        // 驗證是否為你的帳號 (這裡可以加上 Email 檢查)
-        document.getElementById('login-module').style.display = 'none';
-        document.getElementById('admin-info').style.display = 'block';
-        document.getElementById('admin-name').innerText = "管理員: " + payload.name;
-        
-        // 【重要】解鎖後台修改區域
-        document.getElementById('admin-editor').style.display = 'block';
-    }
-
-    // 4. 修改並儲存 (對接你寫好的後台)
-    function handleUpdate() {
+    async function init() {
         try {
-            const newData = JSON.parse(document.getElementById('json-input').value);
-            shopData = newData;
-            renderShop();
-
-            // 呼叫你原本寫好的 Vercel 後端儲存 API
-            fetch('/api/save', { 
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newData)
-            }).then(res => {
-                if(res.ok) alert("數據已成功同步至 Vercel 資料庫！");
-            });
-        } catch (e) {
-            alert("JSON 格式錯誤，請檢查後再儲存。");
-        }
+            const res = await fetch('/api/products');
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.length > 0) products = data;
+            }
+        } catch (e) { console.log("使用內建資料"); }
+        render();
     }
-</script>
 
+    // --- Google 登入驗證邏輯 ---
+    function handleCredentialResponse(response) {
+        const payload = JSON.parse(atob(response.credential.split('.')[1]));
+        console.log("登入嘗試: " + payload.email);
+
+        // 如果你在後端已經做好了權限檢查，這裡直接 fetch API 驗證 Token
+        fetch('/api/verify', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ token: response.credential })
+        }).then(res => {
+            if (res.ok) {
+                isEditMode = true;
+                document.getElementById('adminBar').style.display = 'flex';
+                document.getElementById('adminName').innerText = "管理員：" + payload.name;
+                render();
+            } else {
+                alert("權限不足，無法進入管理模式。");
+            }
+        });
+    }
+
+    function logoutAdmin() {
+        isEditMode = false;
+        document.getElementById('adminBar').style.display = 'none';
+        render();
+    }
+
+    function render() {
+        const grid = document.getElementById('productGrid');
+        grid.innerHTML = '';
+        products.forEach((p, i) => {
+            if (!isEditMode && p.status === 'hide') return;
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.category = p.category;
+            const isPause = p.status === 'pause';
+            const isHide = p.status === 'hide';
+
+            let adminUI = isEditMode ? `
+                <div class="admin-edit-zone" style="display:block;">
+                    <label>商品標題</label>
+                    <input type="text" value="${p.title}" onchange="products[${i}].title=this.value">
+                    <label>分類 (topup/card/panel/vip)</label>
+                    <select onchange="products[${i}].category=this.value; render();">
+                        <option value="topup" ${p.category=='topup'?'selected':''}>手遊代儲</option>
+                        <option value="card" ${p.category=='card'?'selected':''}>點數卡</option>
+                        <option value="panel" ${p.category=='panel'?'selected':''}>代購面板</option>
+                        <option value="vip" ${p.category=='vip'?'selected':''}>代付/會員</option>
+                    </select>
+                    <label>狀態控制</label>
+                    <select onchange="products[${i}].status=this.value; render();">
+                        <option value="active" ${p.status=='active'?'selected':''}>正常</option>
+                        <option value="pause" ${p.status=='pause'?'selected':''}>暫停</option>
+                        <option value="hide" ${p.status=='hide'?'selected':''}>下架隱藏</option>
+                    </select>
+                    <label>價目 JSON</label>
+                    <textarea onchange="updateOptions(${i}, this.value)">${JSON.stringify(p.options)}</textarea>
+                    <button onclick="if(confirm('確定刪除？')){products.splice(${i},1);render();}" style="color:red; background:none; border:none; cursor:pointer;">[ 永久刪除 ]</button>
+                </div>` : '';
+
+            card.innerHTML = `
+                ${adminUI}
+                ${isPause ? '<div class="status-tag tag-pause">暫停供應 (維護中)</div>' : ''}
+                ${isHide && isEditMode ? '<div class="status-tag tag-hidden">已下架 (僅管理員可見)</div>' : ''}
+                <div class="card-title">${p.title}</div>
+                <select onchange="document.getElementById('p-${i}').innerText = Number(this.value).toLocaleString()" ${isPause ? 'disabled' : ''}>
+                    ${p.options.map(opt => `<option value="${opt.price}">${opt.label}</option>`).join('')}
+                </select>
+                <div class="price-display"><span class="current-price" id="p-${i}">${Number(p.options[0].price).toLocaleString()}</span></div>
+                <a href="${isPause ? '#' : 'https://discord.gg/aveVvmcpsZ'}" class="order-btn ${isPause ? 'btn-disabled' : ''}" target="_blank">
+                   ${isPause ? '暫不開放' : '立即開單'}
+                </a>`;
+            grid.appendChild(card);
+        });
+    }
+
+    // --- 其他功能函數 (保持不變) ---
+    function updateOptions(i, val) { try { products[i].options = JSON.parse(val); render(); } catch(e) { alert("JSON 格式錯誤！"); } }
+    function addNewProduct() {
+        products.unshift({ id: "new_"+Date.now(), category: "topup", title: "新商品名稱", status: "active", options: [{label: "100面額", price: 100}] });
+        render();
+    }
+    async function saveChanges() {
+        const res = await fetch('/api/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ data: products }) });
+        alert(await res.text());
+    }
+    function calc() { let r = document.getElementById('rmb').value; document.getElementById('twd').innerText = r ? (r * 5).toLocaleString() : 0; }
+    function doSearch() { 
+        let v = document.getElementById('search').value.toLowerCase(); 
+        document.querySelectorAll('.card').forEach(c => { c.style.display = c.innerText.toLowerCase().includes(v) ? "flex" : "none"; }); 
+    }
+    function filterItems(cat) { 
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); 
+        event.currentTarget.classList.add('active'); 
+        document.querySelectorAll('.card').forEach(c => { c.style.display = (cat === 'all' || c.dataset.category === cat) ? "flex" : "none"; }); 
+    }
+    init();
+</script>
 </body>
 </html>
