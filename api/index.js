@@ -6,10 +6,11 @@ module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     if (req.method !== 'POST') {
-        return res.status(200).send("API 運作中 - 已加載 Google 認證套件");
+        return res.status(200).send("API 已成功加載套件，準備接受登入！");
     }
 
     try {
@@ -26,6 +27,6 @@ module.exports = async (req, res) => {
             return res.status(403).json({ error: "身分不符" });
         }
     } catch (e) {
-        return res.status(401).json({ error: "驗證出錯" });
+        return res.status(401).json({ error: "驗證失敗" });
     }
 };
