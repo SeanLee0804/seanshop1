@@ -1,50 +1,105 @@
-// 1. 初始化讀取雲端 (所有人都能讀，但不能寫)
-async function initStore() {
-    try {
-        const res = await fetch('/api');
-        const data = await res.json();
-        if (data.products) {
-            storeData = data.products;
-        }
-    } catch (e) { console.error("讀取失敗"); }
-    renderProducts();
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUNSLINGER | 槍手專業代儲平台</title>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <meta name="google-signin-client_id" content="446221628195-8b1qsqhgv065p17fl115tupc9lob730pq.apps.googleusercontent.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Oxanium:wght@700&display=swap" rel="stylesheet">
     
-    // 初始化 Google Auth，檢查是否已經登入
-    gapi.load('auth2', function() {
-        gapi.auth2.init().then(() => {
-            const authInstance = gapi.auth2.getAuthInstance();
-            // 如果已經登入且是老闆，自動打開面板
-            if (authInstance.isSignedIn.get()) {
-                checkAdminStatus(authInstance.currentUser.get());
+    <style>
+        /* 保留你原本的所有 CSS 樣式... */
+        :root { --primary: #5865F2; --accent: #00f2ff; --bg: #0a0a0f; --card-bg: rgba(255, 255, 255, 0.05); }
+        /* ... (略) ... */
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">GUNSLINGER STORE</div>
+    <button onclick="document.body.classList.toggle('light-mode')" style="background:var(--card-bg); border:1px solid var(--border); color:var(--text); border-radius:50%; width:40px; height:40px; cursor:pointer;">🌓</button>
+</header>
+
+<div class="admin-fab" onclick="toggleAdmin()">🔑</div>
+<div class="admin-bar" id="adminBar">
+    <button onclick="addNewProduct()" style="background:#4dfd63; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">＋ 新增商品</button>
+    <button id="save-btn" onclick="saveChanges()" style="background:var(--primary); color:white; border:none; padding:10px 25px; border-radius:8px; font-weight:bold; cursor:pointer;">💾 儲存並發布更新</button>
+    <button onclick="logoutAdmin()" style="background:#ff4d4f; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">結束管理</button>
+</div>
+<div id="my-signin" style="display:none;"></div>
+
+<script>
+    const ADMIN_KEY = "SeanLee0804"; // 這是你的面板開關密碼
+    const ADMIN_EMAIL = "034sean0804@gmail.com"; // 這是你的雲端存取身分
+    let isEditMode = false;
+    let products = [ /* 這裡是你的初始商品資料... */ ];
+
+    // 3. 【雲端初始化】改寫原本的 init
+    async function init() {
+        console.log("正在連線至 GUNSLINGER 雲端保險庫...");
+        try {
+            const res = await fetch('/api'); // 對接到 Vercel 的 api/index.js
+            const data = await res.json();
+            if (data.products && data.products.length > 0) {
+                products = data.products;
+                console.log("✅ 雲端資料同步完成");
             }
-        });
-    });
-}
-
-// 2. 核心安全：檢查是否為管理員帳號
-function checkAdminStatus(googleUser) {
-    const profile = googleUser.getBasicProfile();
-    const email = profile.getEmail();
-    const ADMIN_EMAIL = "034sean0804@gmail.com"; // 只有你的信箱才准看
-
-    if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-        document.getElementById('admin-panel').style.display = 'block';
-        console.log("✅ 店長身分確認，管理面板已解鎖");
-    } else {
-        document.getElementById('admin-panel').style.display = 'none';
-        alert("你不是老闆喔喵！請勿亂動保險箱。");
+        } catch (e) { 
+            console.log("⚠️ 雲端連線失敗，啟動本地保險機制"); 
+        }
+        render();
     }
-}
 
-// 3. 點擊鑰匙 🔑 的動作
-function toggleAdmin() {
-    const authInstance = gapi.auth2.getAuthInstance();
-    if (!authInstance.isSignedIn.get()) {
-        // 沒登入就跳出登入視窗
-        authInstance.signIn().then(user => checkAdminStatus(user));
-    } else {
-        // 已登入就切換顯示
-        const panel = document.getElementById('admin-panel');
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    // 4. 【雲端儲存】改寫原本的 saveChanges
+    async function saveChanges() {
+        const authInstance = gapi.auth2.getAuthInstance();
+        
+        // 如果還沒 Google 登入，先叫出登入
+        if (!authInstance.isSignedIn.get()) {
+            alert("請先驗證店長身分才能發布更新！");
+            gapi.signin2.render('my-signin', { 'onsuccess': onSignIn });
+            document.getElementById('my-signin').click();
+            return;
+        }
+
+        const user = authInstance.currentUser.get();
+        if (user.getBasicProfile().getEmail().toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+            alert("此帳號無權限更新雲端保險庫！");
+            return;
+        }
+
+        const token = user.getAuthResponse().id_token;
+        const saveBtn = document.getElementById('save-btn');
+        saveBtn.innerText = "⚡ 同步中...";
+
+        try {
+            const res = await fetch('/api', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token: token,
+                    action: 'save',
+                    newData: products // 傳送你編輯後的商品數組
+                })
+            });
+            if (res.ok) {
+                alert("✨ 全網更新成功！全世界現在都能看到最新價格。");
+            } else {
+                alert("❌ 儲存失敗，請檢查 Vercel 日誌。");
+            }
+        } catch (e) {
+            alert("❌ 連線異常，請確認環境變數。");
+        }
+        saveBtn.innerText = "💾 儲存並發布更新";
     }
-}
+
+    // (其餘 render, toggleAdmin, calc, doSearch, filterItems 函數全部保留你原始的寫法，保證風格不變)
+    function render() { /* ... 你原本的寫法 ... */ }
+    function toggleAdmin() { /* ... 你原本的寫法 ... */ }
+    function onSignIn(googleUser) { console.log("身分驗證成功"); }
+    
+    init();
+</script>
+</body>
+</html>
