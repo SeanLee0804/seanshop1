@@ -1,10 +1,10 @@
 const { OAuth2Client } = require('google-auth-library');
 
-// 確保這裡是老闆的最愛帳號
-const ADMIN_EMAIL = '034sean0804@gmail.com'; 
-const MY_CLIENT_ID = '446221628195-8b1uquhgku05p17fl115tupc9lob730q.apps.googleusercontent.com';
+// 你的 Client ID 和管理員信箱
+const CLIENT_ID = '446221628195-8b1uquhgku05p17fl115tupc9lob730q.apps.googleusercontent.com';
+const ADMIN_EMAIL = '034sean0804@gmail.com';
 
-const client = new OAuth2Client(MY_CLIENT_ID);
+const client = new OAuth2Client(CLIENT_ID);
 
 module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,28 +14,32 @@ module.exports = async (req, res) => {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     if (req.method !== 'POST') {
-        return res.status(200).send("API Online - 準備接受登入");
+        return res.status(200).send("API 已就緒，等待老闆登入！");
     }
 
     try {
         const { token } = req.body;
+        // 使用更彈性的驗證方式
         const ticket = await client.verifyIdToken({
             idToken: token,
-            audience: MY_CLIENT_ID
+            audience: CLIENT_ID
         });
         const payload = ticket.getPayload();
         
-        // 【核心修正】強制轉成小寫比對，避免大小寫不一致
-        const userEmail = payload.email.toLowerCase().trim();
-        const adminEmail = ADMIN_EMAIL.toLowerCase().trim();
+        // 取得 Google 回傳的真實 Email
+        const googleEmail = payload.email.toLowerCase();
         
-        if (userEmail === adminEmail) {
-            return res.status(200).json({ name: payload.name, success: true });
+        if (googleEmail === ADMIN_EMAIL.toLowerCase()) {
+            return res.status(200).json({ 
+                name: payload.name, 
+                success: true 
+            });
         } else {
-            // 如果失敗，直接讓前端彈窗告訴你到底偵測到哪個 Email
-            return res.status(403).json({ error: `拒絕存取：偵測到的 Email 是 [${userEmail}]` });
+            return res.status(403).json({ 
+                error: `驗證失敗：你目前的 Google 帳號是 [${googleEmail}]，並非管理員。` 
+            });
         }
     } catch (e) {
-        return res.status(401).json({ error: "Google 驗證失敗，請重試" });
+        return res.status(401).json({ error: "驗證發生錯誤，可能是 Client ID 設定有誤" });
     }
 };
