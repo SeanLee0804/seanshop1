@@ -1,161 +1,50 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GUNSLINGER | 槍手專業代儲</title>
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
-    <meta name="google-signin-client_id" content="446221628195-8b1qsqhgv065p17fl115tupc9lob730pq.apps.googleusercontent.com">
-    <style>
-        /* 恢復槍手商店帥氣的深色風格 */
-        body {
-            background-color: #0d0d15;
-            color: #ffffff;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0; padding: 20px;
+// 1. 初始化讀取雲端 (所有人都能讀，但不能寫)
+async function initStore() {
+    try {
+        const res = await fetch('/api');
+        const data = await res.json();
+        if (data.products) {
+            storeData = data.products;
         }
-        .header {
-            font-size: 24px; font-weight: bold; color: #fff;
-            margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px;
-        }
-        .container { max-width: 1200px; margin: auto; }
-        
-        /* 匯率助手區 */
-        .rate-box {
-            background: #161625; border: 1px solid #2d2d45;
-            padding: 15px; border-radius: 10px; margin-bottom: 20px;
-            display: flex; align-items: center; gap: 10px;
-        }
-
-        /* 商品列表卡片 */
-        .product-list {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .card {
-            background: #1c1c2e; border-radius: 15px; padding: 20px;
-            border: 1px solid #2d2d45; text-align: center;
-        }
-        .card h3 { color: #4deeea; margin-bottom: 15px; }
-        .price-tag { font-size: 32px; color: #39ff14; font-weight: bold; margin: 15px 0; }
-        .btn-order {
-            background: #4a55e2; color: white; border: none;
-            width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;
-        }
-
-        /* 管理員面板 */
-        .admin-panel {
-            background: #161625; border: 2px dashed #4a55e2;
-            padding: 20px; border-radius: 15px; margin-top: 40px; display: none;
-        }
-        textarea {
-            width: 100%; height: 200px; background: #0d0d15; color: #39ff14;
-            border: 1px solid #2d2d45; border-radius: 10px; padding: 10px; font-family: monospace;
-        }
-        .btn-save {
-            background: #39ff14; color: #000; padding: 10px 20px;
-            border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 10px;
-        }
-
-        #admin-key { position: fixed; bottom: 20px; right: 20px; cursor: pointer; font-size: 24px; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="header">GUNSLINGER STORE</div>
-
-    <div class="rate-box">
-        💰 匯率助手 (1:5) <input type="number" placeholder="人民幣" style="background:#0d0d15; color:white; border:1px solid #333; padding:5px; border-radius:5px;"> → <span style="color:#39ff14; font-weight:bold;">0 TWD</span>
-    </div>
-
-    <div id="product-container" class="product-list">
-        <p style="text-align: center; grid-column: 1/-1;">正在同步雲端保險箱數據...</p>
-    </div>
-
-    <div id="admin-panel" class="admin-panel">
-        <h3 style="color: #4a55e2;">🛠️ 槍手後台管理</h3>
-        <textarea id="json-input"></textarea>
-        <button class="btn-save" id="save-btn" onclick="saveToCloud()">💾 更新全網價格</button>
-    </div>
-</div>
-
-<div id="admin-key" onclick="toggleAdmin()">🔑</div>
-<div id="my-signin" style="display: none;"></div>
-
-<script>
-    let storeData = [];
-
-    // 1. 初始化讀取雲端
-    async function initStore() {
-        try {
-            const res = await fetch('/api');
-            const data = await res.json();
-            if (data.products) {
-                storeData = data.products;
-            } else {
-                // 預設資料
-                storeData = [
-                    { "name": "Steam 蒸氣卡", "options": "2310元", "price": "2,450" },
-                    { "name": "荒野亂鬥 Brawl Stars", "options": "2000+200 寶石", "price": "3,190" }
-                ];
+    } catch (e) { console.error("讀取失敗"); }
+    renderProducts();
+    
+    // 初始化 Google Auth，檢查是否已經登入
+    gapi.load('auth2', function() {
+        gapi.auth2.init().then(() => {
+            const authInstance = gapi.auth2.getAuthInstance();
+            // 如果已經登入且是老闆，自動打開面板
+            if (authInstance.isSignedIn.get()) {
+                checkAdminStatus(authInstance.currentUser.get());
             }
-        } catch (e) { console.error("雲端讀取失敗"); }
-        renderProducts();
+        });
+    });
+}
+
+// 2. 核心安全：檢查是否為管理員帳號
+function checkAdminStatus(googleUser) {
+    const profile = googleUser.getBasicProfile();
+    const email = profile.getEmail();
+    const ADMIN_EMAIL = "034sean0804@gmail.com"; // 只有你的信箱才准看
+
+    if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        document.getElementById('admin-panel').style.display = 'block';
+        console.log("✅ 店長身分確認，管理面板已解鎖");
+    } else {
+        document.getElementById('admin-panel').style.display = 'none';
+        alert("你不是老闆喔喵！請勿亂動保險箱。");
     }
+}
 
-    // 2. 渲染商品
-    function renderProducts() {
-        const container = document.getElementById('product-container');
-        container.innerHTML = storeData.map(item => `
-            <div class="card">
-                <h3>${item.name}</h3>
-                <select style="width:100%; background:#0d0d15; color:white; padding:10px; border-radius:5px; border:1px solid #333;">
-                    <option>${item.options}</option>
-                </select>
-                <div class="price-tag"><span style="font-size:16px; color:#aaa;">NT$</span> ${item.price}</div>
-                <button class="btn-order">立即開單</button>
-            </div>
-        `).join('');
-        document.getElementById('json-input').value = JSON.stringify(storeData, null, 2);
-    }
-
-    // 3. 存檔到雲端
-    async function saveToCloud() {
-        const authInstance = gapi.auth2.getAuthInstance();
-        if (!authInstance.isSignedIn.get()) {
-            alert("請先驗證管理員身分！");
-            gapi.signin2.render('my-signin', { 'onsuccess': () => alert("登入成功") });
-            document.getElementById('my-signin').click();
-            return;
-        }
-
-        const token = authInstance.currentUser.get().getAuthResponse().id_token;
-        const saveBtn = document.getElementById('save-btn');
-        saveBtn.innerText = "⚡ 同步中...";
-        
-        try {
-            const res = await fetch('/api', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    token: token,
-                    action: 'save',
-                    newData: JSON.parse(document.getElementById('json-input').value)
-                })
-            });
-            if (res.ok) alert("✅ 槍手保險箱更新成功！");
-        } catch (e) { alert("同步失敗"); }
-        saveBtn.innerText = "💾 更新全網價格";
-        initStore();
-    }
-
-    function toggleAdmin() {
+// 3. 點擊鑰匙 🔑 的動作
+function toggleAdmin() {
+    const authInstance = gapi.auth2.getAuthInstance();
+    if (!authInstance.isSignedIn.get()) {
+        // 沒登入就跳出登入視窗
+        authInstance.signIn().then(user => checkAdminStatus(user));
+    } else {
+        // 已登入就切換顯示
         const panel = document.getElementById('admin-panel');
         panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
     }
-
-    window.onload = initStore;
-</script>
-</body>
-</html>
+}
