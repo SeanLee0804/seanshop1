@@ -1,7 +1,7 @@
 const { OAuth2Client } = require('google-auth-library');
 
 // 這是你的 Client ID，請確保前後沒有空格
-const CLIENT_ID = '446221628195-8b1uquhgku05p17fl115tupc9lob730q.apps.googleusercontent.com';
+const CLIENT_ID = '446221628195-8b1qsqhgv065p17f115topc9iob730pq.apps.googleusercontent.com';
 const ADMIN_EMAIL = '034sean0804@gmail.com';
 
 const client = new OAuth2Client(CLIENT_ID);
