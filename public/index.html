@@ -2,86 +2,121 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>商城後台管理系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sean Shop - 專業遊戲帳號交易</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
-        #admin-content { display: none; margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
-        textarea { width: 100%; height: 300px; font-family: monospace; margin-bottom: 10px; }
-        .save-btn { background: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer; }
-        .save-btn:hover { background: #0056b3; }
+        /* 恢復 Vercel 截圖中的深色質感 */
+        :root {
+            --bg-color: #0d1117;
+            --card-color: #161b22;
+            --accent-color: #58a6ff;
+            --text-color: #c9d1d9;
+            --danger: #f85149;
+        }
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .nav-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid #30363d; margin-bottom: 30px; }
+        
+        /* 商品卡片配置 */
+        .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .item-card { background: var(--card-color); border: 1px solid #30363d; border-radius: 6px; padding: 16px; transition: 0.2s; }
+        .item-card:hover { border-color: #8b949e; }
+        .item-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; color: #fff; }
+        .item-price { font-size: 1.1rem; color: #3fb950; font-weight: bold; }
+        
+        /* 管理員修改區域 */
+        #admin-editor { display: none; margin-top: 40px; padding: 20px; background: #010409; border: 1px solid var(--accent-color); border-radius: 6px; }
+        #json-input { width: 100%; height: 300px; background: #0d1117; color: #79c0ff; border: 1px solid #30363d; padding: 10px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+        .btn-save { background-color: #238636; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        .btn-save:hover { background-color: #2ea043; }
     </style>
 </head>
 <body>
 
-    <h2>遊戲商城 - 後台管理</h2>
-
-    <div id="auth-provider">
-        <div id="g_id_onload"
-             data-client_id="446221628195-8b1qsqhgv065p17fl115tupc9lob730pq.apps.googleusercontent.com"
-             data-callback="onGoogleLogin">
+<div class="container">
+    <div class="nav-header">
+        <h1 style="color: #fff; margin: 0;">Sean Shop</h1>
+        <div id="login-module">
+            <div id="g_id_onload"
+                 data-client_id="446221628195-8b1qsqhgv065p17fl115tupc9lob730pq.apps.googleusercontent.com"
+                 data-callback="onAdminAuth">
+            </div>
+            <div class="g_id_signin" data-type="standard"></div>
         </div>
-        <div class="g_id_signin" data-type="standard"></div>
+        <div id="admin-info" style="display:none;">
+            <span id="admin-name"></span>
+            <button onclick="location.reload()" style="background:none; border:1px solid #30363d; color:#8b949e; cursor:pointer; margin-left:10px;">登出</button>
+        </div>
     </div>
 
-    <div id="admin-content">
-        <p id="welcome-msg"></p>
-        <h3>修改商城資料 (JSON 格式)</h3>
-        <textarea id="data-editor" placeholder="請輸入要修改的商城 HTML 或 JSON 資料..."></textarea>
+    <div class="shop-grid" id="main-shop">
+        </div>
+
+    <div id="admin-editor">
+        <h2 style="color: var(--accent-color);">管理員控制台 - 修改商城資料</h2>
+        <p>編輯下方的 JSON 資料來更新商城內容：</p>
+        <textarea id="json-input"></textarea>
         <br>
-        <button class="save-btn" onclick="triggerSave()">確認修改並儲存到後端</button>
+        <button class="btn-save" onclick="handleUpdate()">確認修改並更新 (自動儲存)</button>
     </div>
+</div>
 
-    <script>
-        // 4. 處理登入：驗證成功後「解鎖」後台
-        function onGoogleLogin(response) {
-            const token = response.credential;
-            const payload = JSON.parse(atob(token.split('.')[1]));
+<script>
+    // 1. 初始化資料 (模擬你原本的數據庫內容)
+    let shopData = [
+        { id: 1, name: "625 VALORANT Points", price: 150 },
+        { id: 2, name: "1250 VALORANT Points", price: 300 },
+        { id: 3, name: "2500 VALORANT Points", price: 600 }
+    ];
 
-            // 這裡對接你已經做好的後端驗證 API
-            fetch('/verify-admin-api', {
+    // 2. 渲染商城
+    function renderShop() {
+        const grid = document.getElementById('main-shop');
+        grid.innerHTML = shopData.map(item => `
+            <div class="item-card">
+                <div class="item-title">${item.name}</div>
+                <div class="item-price">NT$ ${item.price}</div>
+            </div>
+        `).join('');
+        document.getElementById('json-input').value = JSON.stringify(shopData, null, 2);
+    }
+    renderShop();
+
+    // 3. Google 登入驗證回調
+    function onAdminAuth(response) {
+        // 解析 Google Token
+        const payload = JSON.parse(atob(response.credential.split('.')[1]));
+        
+        // 驗證是否為你的帳號 (這裡可以加上 Email 檢查)
+        document.getElementById('login-module').style.display = 'none';
+        document.getElementById('admin-info').style.display = 'block';
+        document.getElementById('admin-name').innerText = "管理員: " + payload.name;
+        
+        // 【重要】解鎖後台修改區域
+        document.getElementById('admin-editor').style.display = 'block';
+    }
+
+    // 4. 修改並儲存 (對接你寫好的後台)
+    function handleUpdate() {
+        try {
+            const newData = JSON.parse(document.getElementById('json-input').value);
+            shopData = newData;
+            renderShop();
+
+            // 呼叫你原本寫好的 Vercel 後端儲存 API
+            fetch('/api/save', { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken: token })
+                body: JSON.stringify(newData)
             }).then(res => {
-                if (res.ok) {
-                    // 驗證成功，顯示後台
-                    document.getElementById('auth-provider').style.display = 'none';
-                    document.getElementById('admin-content').style.display = 'block';
-                    document.getElementById('welcome-msg').innerText = "當前管理員：" + payload.name;
-                    
-                    // 這裡可以順便載入現有的商城資料到 textarea
-                    loadCurrentData();
-                } else {
-                    alert("權限不足，無法進入後台。");
-                }
+                if(res.ok) alert("數據已成功同步至 Vercel 資料庫！");
             });
+        } catch (e) {
+            alert("JSON 格式錯誤，請檢查後再儲存。");
         }
+    }
+</script>
 
-        // 5. 載入資料邏輯
-        function loadCurrentData() {
-            // 從你原本的資料庫或檔案抓取現有資料
-            fetch('/get-shop-data')
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('data-editor').value = JSON.stringify(data, null, 2);
-                });
-        }
-
-        // 6. 儲存修改邏輯 (對接你做好的後台儲存功能)
-        function triggerSave() {
-            const content = document.getElementById('data-editor').value;
-            
-            fetch('/save-shop-data', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ newData: content })
-            })
-            .then(res => {
-                if (res.ok) alert("儲存成功！");
-                else alert("儲存失敗，請檢查伺服器狀態。");
-            });
-        }
-    </script>
 </body>
 </html>
