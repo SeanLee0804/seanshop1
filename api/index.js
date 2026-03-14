@@ -32,3 +32,4 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: '驗證伺服器錯誤' });
     }
 };
+ 
